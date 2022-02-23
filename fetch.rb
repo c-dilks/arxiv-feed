@@ -3,19 +3,55 @@
 require 'arx'
 require 'colorize'
 
-# search terms
-keywords = [
-  'spin',
-  'asymmetry',
-  'fragmentation',
-  'dihadron',
-  'di hadron', # (actually finds 'di-hadron')
-]
+# arguments
+if ARGV.length<1
+  $stderr.puts """
+  USAGE: #{$0} [MODE]...
+
+    modes:
+    - 1: spin, dihadrons, fragmentation
+    - 2: instrumentation and detectors
+
+    specify multiple modes to OR them together
+  """
+  exit 2
+end
+modes = ARGV.map(&:to_i)
+
+# set search keywords and categories
+keywords = []
+categories = []
+modes.each do |mode|
+  case mode
+  when 1
+    categories.append *[
+      'hep-ex',
+      'hep-th',
+      'hep-ph',
+      'hep-lat',
+      'nucl-ex',
+    ]
+    keywords.append *[
+      'spin',
+      'asymmetry',
+      'fragmentation',
+      'dihadron',
+      'di hadron', # (actually finds 'di-hadron')
+    ]
+  when 2
+    categories.append 'physics.ins-det'
+  else
+    $stderr.puts "\n\nERROR: unknown mode #{mode}\n\n"
+  end
+end
+puts "categories = #{categories}"
+puts "keywords = #{keywords}"
 
 # query arXiv
+puts "querying arXiv..."
 papers = Arx(sort_by: :submitted_at) do |query|
-  query.category('hep-ex')
-  query.title(*keywords, connective: :or)
+  query.category(*categories, connective: :or) if categories.length>0
+  query.title(*keywords, connective: :or) if keywords.length>0
 end
 
 # print
@@ -33,11 +69,12 @@ papers.each do |paper|
   printField(paper.title,:light_red)
   sep
   printField(paper.url,:light_green)
-  printField(paper.updated_at.strftime("%d %b %Y"),:yellow)
+  printField(paper.primary_category.name,:light_white)
+  printField(paper.updated_at.strftime("%d %b %Y"),:light_yellow)
   authors = paper.authors.map(&:name)
   authors = authors[0..4].append("et al.") if authors.length>5
-  printField(authors.join(', '),:magenta)
-  printField(paper.abstract)
+  printField(authors.join(', '),:light_magenta)
+  printField(paper.abstract,:light_cyan)
   printField('')
 end
 ResultFile.close
