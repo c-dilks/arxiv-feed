@@ -59,16 +59,16 @@ ResultFileN = "arxiv.tmp"
 ResultFile = File.open(ResultFileN,"w")
 Ncols = `tput cols`.to_i
 def sep(stream=ResultFile) stream.puts '='*Ncols end
-def printField(text, color=:default, stream=ResultFile)
+def printField(text, color=:default, style=:default, stream=ResultFile)
   wrappedText = text.gsub(/(.{1,#{Ncols-5}})( +|$\n?)|(.{1,#{Ncols-5}})/, "\\1\\3\n")
-  coloredText = wrappedText.split("\n").map{|tok|tok.colorize(color)}.join("\n")
+  coloredText = wrappedText.split("\n").map{|tok|tok.colorize(:color=>color,:mode=>style)}.join("\n")
   stream.puts "#{coloredText.chomp}"
 end
 papers.each do |paper|
   sep
-  printField(paper.title,:light_red)
+  printField(paper.title,:light_green,:bold)
   sep
-  printField(paper.url,:light_green)
+  printField(paper.url,:light_red)
   printField(paper.primary_category.name,:light_white)
   printField(paper.updated_at.strftime("%d %b %Y"),:light_yellow)
   authors = paper.authors.map(&:name)
