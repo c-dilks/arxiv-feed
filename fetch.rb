@@ -3,6 +3,9 @@
 require 'arx'
 require 'colorize'
 
+# settings
+MAX_RESULTS = 30 # number of results
+
 # arguments
 if ARGV.length<1
   $stderr.puts """
@@ -49,7 +52,7 @@ puts "keywords = #{keywords}"
 
 # query arXiv
 puts "querying arXiv..."
-papers = Arx(sort_by: :submitted_at) do |query|
+papers = Arx(sort_by: :submitted_at, max_results: MAX_RESULTS-1) do |query|
   query.category(*categories, connective: :or) if categories.length>0
   query.title(*keywords, connective: :or) if keywords.length>0
 end
@@ -64,9 +67,9 @@ def printField(text, color=:default, style=:default, stream=ResultFile)
   coloredText = wrappedText.split("\n").map{|tok|tok.colorize(:color=>color,:mode=>style)}.join("\n")
   stream.puts "#{coloredText.chomp}"
 end
-papers.each do |paper|
+papers.each_with_index do |paper, idx|
   sep
-  printField(paper.title,:light_green,:bold)
+  printField("#{idx}.   #{paper.title}",:light_green,:bold)
   sep
   printField(paper.url,:light_red)
   printField(paper.primary_category.name,:light_white)
